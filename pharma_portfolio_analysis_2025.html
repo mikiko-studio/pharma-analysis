@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>世界大手5社 製薬ポートフォリオ分析 2025</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f8f7f4; color: #1a1a1a; padding: 24px; line-height: 1.5; }
+h1 { font-size: 20px; font-weight: 500; margin-bottom: 6px; }
+.subtitle { font-size: 13px; color: #666; margin-bottom: 24px; }
+.tab-bar { display: flex; gap: 6px; margin-bottom: 20px; flex-wrap: wrap; }
+.tab { padding: 7px 16px; border: 1px solid #ccc; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; color: #555; background: #fff; transition: all 0.15s; }
+.tab.active { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+.tab:hover:not(.active) { border-color: #888; }
+.section { display: none; }
+.section.active { display: block; }
+.company-tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+.ctab { padding: 5px 12px; border: 1px solid #ccc; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 500; color: #555; background: #fff; transition: all 0.15s; }
+.ctab.active { background: #f0efe8; color: #1a1a1a; border-color: #888; }
+.metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 20px; }
+.metric { background: #f0efe8; border-radius: 8px; padding: 12px 14px; }
+.metric-label { font-size: 11px; color: #666; margin-bottom: 4px; }
+.metric-value { font-size: 22px; font-weight: 500; }
+.product-table { width: 100%; border-collapse: collapse; font-size: 13px; background: #fff; border-radius: 10px; overflow: hidden; }
+.product-table th { font-size: 11px; font-weight: 500; color: #666; text-align: left; padding: 8px 12px; border-bottom: 1px solid #e8e6e0; background: #fafaf8; }
+.product-table td { padding: 10px 12px; border-bottom: 1px solid #f0efe8; vertical-align: middle; }
+.product-table tr:last-child td { border-bottom: none; }
+.bar-wrap { background: #f0efe8; border-radius: 3px; height: 8px; width: 120px; }
+.bar-fill { height: 8px; border-radius: 3px; }
+.patent-badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 500; }
+.badge-red { background: #fce8e8; color: #a32d2d; }
+.badge-amber { background: #faeeda; color: #854f0b; }
+.badge-green { background: #eaf3de; color: #3b6d11; }
+.badge-teal { background: #e1f5ee; color: #0f6e56; }
+.pipeline-card { border: 1px solid #e0ded8; border-radius: 8px; padding: 12px 14px; margin-bottom: 8px; background: #fff; }
+.pipeline-name { font-size: 13px; font-weight: 500; }
+.pipeline-detail { font-size: 12px; color: #666; margin-top: 3px; }
+.risk-gauge { height: 10px; border-radius: 5px; background: #f0efe8; position: relative; overflow: hidden; margin-top: 4px; }
+.risk-fill { height: 100%; border-radius: 5px; }
+.ov-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+.overview-card { border: 1px solid #e0ded8; border-radius: 12px; padding: 16px; cursor: pointer; transition: border-color 0.15s; background: #fff; }
+.overview-card:hover { border-color: #888; }
+.company-name { font-size: 15px; font-weight: 500; }
+.company-rev { font-size: 22px; font-weight: 500; margin-top: 4px; display: inline; }
+.company-growth { font-size: 12px; font-weight: 500; padding: 2px 8px; border-radius: 999px; display: inline-block; margin-left: 8px; }
+.growth-pos { background: #eaf3de; color: #3b6d11; }
+.growth-neg { background: #fce8e8; color: #a32d2d; }
+.analysis-block { border-left: 3px solid; padding: 12px 16px; margin-bottom: 12px; border-radius: 0 8px 8px 0; }
+</style>
+</head>
+<body>
+
+<h1>世界大手5社 製薬ポートフォリオ分析</h1>
+<p class="subtitle">2025年実績・パテント期限・開発パイプライン・財務健全性（自己資本比率）比較ダッシュボード</p>
+
+<div class="tab-bar" id="mainTabs">
+  <button class="tab active" data-tab="overview">総合比較</button>
+  <button class="tab" data-tab="products">主要製品売上</button>
+  <button class="tab" data-tab="patent">パテント期限</button>
+  <button class="tab" data-tab="pipeline">開発パイプライン</button>
+  <button class="tab" data-tab="equity">財務健全性</button>
+  <button class="tab" data-tab="analysis">ポートフォリオ評価</button>
+</div>
+
+<div id="overview" class="section active">
+  <div class="ov-grid" id="ovGrid"></div>
+  <div style="margin-top:24px;">
+    <div style="font-size:12px;color:#666;margin-bottom:10px;font-weight:500;">2025年全体売上高比較（十億ドル）</div>
+    <div style="background:#fff;border-radius:10px;padding:16px;">
+      <div style="position:relative;height:260px;">
+        <canvas id="ovChart" role="img" aria-label="5社の2025年売上高比較棒グラフ">各社売上: Eli Lilly 65.2B, Merck 65.0B, Pfizer 62.6B, AstraZeneca 58.7B, Novartis 55.3B</canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="products" class="section">
+  <div class="company-tabs" id="prodTabs"></div>
+  <div id="prodContent"></div>
+</div>
+
+<div id="patent" class="section">
+  <div style="margin-bottom:16px;font-size:13px;color:#666;">各社主要製品のパテント失効タイムライン（2020〜2037年）</div>
+  <div style="background:#fff;border-radius:10px;padding:16px;">
+    <div style="position:relative;height:420px;">
+      <canvas id="patentChart" role="img" aria-label="主要製品パテント失効ガントチャート"></canvas>
+    </div>
+  </div>
+  <div style="margin-top:14px;display:flex;gap:16px;flex-wrap:wrap;">
+    <span style="font-size:12px;display:flex;align-items:center;gap:5px;color:#555;"><span style="width:10px;height:10px;background:#E24B4A;border-radius:2px;display:inline-block;"></span>〜2027年失効（高リスク）</span>
+    <span style="font-size:12px;display:flex;align-items:center;gap:5px;color:#555;"><span style="width:10px;height:10px;background:#EF9F27;border-radius:2px;display:inline-block;"></span>2028〜2029年失効（中リスク）</span>
+    <span style="font-size:12px;display:flex;align-items:center;gap:5px;color:#555;"><span style="width:10px;height:10px;background:#639922;border-radius:2px;display:inline-block;"></span>2030年以降（低リスク）</span>
+  </div>
+</div>
+
+<div id="pipeline" class="section">
+  <div class="company-tabs" id="pipeTabs"></div>
+  <div id="pipeContent"></div>
+</div>
+
+<div id="equity" class="section">
+  <div id="equityContent"></div>
+</div>
+
+<div id="analysis" class="section">
+  <div id="analysisContent"></div>
+</div>
+
+<script>
+const companies = {
+  lilly: {
+    name: "Eli Lilly", short: "LLY", color: "#378ADD", rev2025: 65.2, growth: 45, riskScore: 15,
+    totalAssets: 112.5, totalEquity: 26.5, equityRatio: 23.6,
+    products: [
+      { name: "Mounjaro (チルゼパチド)", indication: "2型糖尿病 / GLP-1", rev: 23.0, patent: 2036 },
+      { name: "Zepbound (チルゼパチド)", indication: "肥満症 / GLP-1", rev: 13.5, patent: 2036 },
+      { name: "Verzenio (アベマシクリブ)", indication: "乳がん / CDK4/6阻害", rev: 5.7, patent: 2028 },
+      { name: "Jardiance (エンパグリフロジン)", indication: "糖尿病・心不全", rev: 3.2, patent: 2028 },
+      { name: "Taltz (イキセキズマブ)", indication: "乾癬 / IL-17A阻害", rev: 2.7, patent: 2030 },
+      { name: "Kisunla (ドナネマブ)", indication: "アルツハイマー病", rev: 0.5, patent: 2037 },
+    ],
+    pipeline: [
+      { name: "Orforglipron（経口GLP-1）", phase: "申請中", peak: "〜80億ドル", indication: "肥満症・2型糖尿病 経口製剤" },
+      { name: "Retatrutide（GLP-1/GIP/GCG）", phase: "Ph3", peak: "〜100億ドル+", indication: "肥満症 三重作動薬" },
+      { name: "Inluriyo（イムルネストラント）", phase: "承認済", peak: "〜30億ドル", indication: "乳がん 経口SERD" },
+      { name: "LY3437943（GLP-1/GIP/GCGR）", phase: "Ph2", peak: "未定", indication: "次世代肥満症" },
+    ]
+  },
+  merck: {
+    name: "Merck", short: "MRK", color: "#1D9E75", rev2025: 65.0, growth: 1, riskScore: 72,
+    totalAssets: 129.5, totalEquity: 49.1, equityRatio: 37.9,
+    products: [
+      { name: "Keytruda（ペムブロリズマブ）", indication: "がん免疫療法 / PD-1阻害", rev: 31.7, patent: 2028 },
+      { name: "Gardasil/9（ガーダシル）", indication: "HPVワクチン", rev: 5.2, patent: 2028 },
+      { name: "Winrevair（ソタテルセプト）", indication: "肺動脈性肺高血圧症", rev: 1.4, patent: 2037 },
+      { name: "Welireg（ベルズチファン）", indication: "腎細胞がん / HIF-2α阻害", rev: 0.9, patent: 2033 },
+      { name: "Lynparza（オラパリブ）※AZ提携", indication: "卵巣・前立腺がん", rev: 1.6, patent: 2027 },
+    ],
+    pipeline: [
+      { name: "Keytruda Qlex（皮下注射）", phase: "承認済", peak: "〜70億ドル（2032年）", indication: "Keytruda後継製剤 SC投与" },
+      { name: "MK-1084（KRAS G12C阻害）", phase: "Ph3", peak: "〜20億ドル", indication: "NSCLC / 膵がん" },
+      { name: "Clesrovimab（RSVモノクロ抗体）", phase: "申請中", peak: "〜15億ドル", indication: "RSV予防（乳幼児）" },
+      { name: "Efineptastat（FASN阻害）", phase: "Ph2", peak: "未定", indication: "前立腺がん" },
+    ]
+  },
+  pfizer: {
+    name: "Pfizer", short: "PFE", color: "#533AB7", rev2025: 62.6, growth: -2, riskScore: 60,
+    totalAssets: 208.2, totalEquity: 93.1, equityRatio: 44.7,
+    products: [
+      { name: "Eliquis（アピキサバン）", indication: "抗凝固薬 / BMS提携", rev: 6.5, patent: 2026 },
+      { name: "Prevnar Family（肺炎球菌ワクチン）", indication: "ワクチン", rev: 6.4, patent: 2029 },
+      { name: "Vyndaqel Family（タファミジス）", indication: "TTRアミロイドーシス", rev: 4.4, patent: 2031 },
+      { name: "Comirnaty（COVID mRNAワクチン）", indication: "COVID-19ワクチン", rev: 4.1, patent: 2030 },
+      { name: "Ibrance（パルボシクリブ）", indication: "乳がん / CDK4/6阻害", rev: 2.4, patent: 2027 },
+      { name: "Padcev（エンホルツマブベドチン）", indication: "尿路上皮がん / ADC", rev: 1.8, patent: 2034 },
+    ],
+    pipeline: [
+      { name: "Danuglipron（経口GLP-1）", phase: "Ph3", peak: "〜50億ドル", indication: "肥満症 経口製剤" },
+      { name: "Lorbrena 適応拡大", phase: "承認済", peak: "〜20億ドル", indication: "ALK+ NSCLC" },
+      { name: "ATTR-CM候補（siRNA）", phase: "Ph3", peak: "〜30億ドル", indication: "心アミロイドーシス" },
+      { name: "Marstacimab（PD-L1×HER2 BsAb）", phase: "Ph2", peak: "未定", indication: "HER2+がん" },
+    ]
+  },
+  az: {
+    name: "AstraZeneca", short: "AZN", color: "#D85A30", rev2025: 58.7, growth: 8, riskScore: 30,
+    totalAssets: 114.1, totalEquity: 48.7, equityRatio: 42.7,
+    products: [
+      { name: "Farxiga（ダパグリフロジン）", indication: "糖尿病・心不全・CKD", rev: 8.4, patent: 2026 },
+      { name: "Tagrisso（オシメルチニブ）", indication: "EGFR+ 肺がん", rev: 7.3, patent: 2030 },
+      { name: "Imfinzi（デュルバルマブ）", indication: "肺がん・胆道がん / PD-L1", rev: 6.1, patent: 2031 },
+      { name: "Ultomiris（ラブリズマブ）", indication: "PNH・gMG / C5阻害", rev: 4.7, patent: 2034 },
+      { name: "Calquence（アカラブルチニブ）", indication: "CLL / BTK阻害", rev: 3.5, patent: 2031 },
+      { name: "Enhertu（T-DXd）※第一三共提携", indication: "乳がん・胃がん / ADC", rev: 2.8, patent: 2032 },
+    ],
+    pipeline: [
+      { name: "Camizestrant（経口SERD）", phase: "Ph3", peak: "〜30億ドル", indication: "ER+乳がん" },
+      { name: "Datroway（Datopotamab deruxtecan）", phase: "承認済", peak: "〜40億ドル", indication: "HR+HER2- 乳がん / ADC" },
+      { name: "Baxdrostat（アルドステロン合成酵素阻害）", phase: "Ph3", peak: "〜20億ドル", indication: "治療抵抗性高血圧" },
+      { name: "AZD5363（サピタリシブ）", phase: "Ph2", peak: "未定", indication: "PIK3CA変異がん" },
+    ]
+  },
+  novartis: {
+    name: "Novartis", short: "NVS", color: "#BA7517", rev2025: 55.3, growth: 8, riskScore: 55,
+    totalAssets: 110.9, totalEquity: 46.5, equityRatio: 42.0,
+    products: [
+      { name: "Entresto（サクビトリル/バルサルタン）", indication: "心不全", rev: 7.7, patent: 2025 },
+      { name: "Cosentyx（セクキヌマブ）", indication: "乾癬・強直性脊椎炎", rev: 6.7, patent: 2029 },
+      { name: "Kisqali（リボシクリブ）", indication: "乳がん / CDK4/6阻害", rev: 4.8, patent: 2033 },
+      { name: "Kesimpta（オファツムマブ）", indication: "多発性硬化症 / CD20阻害", rev: 4.4, patent: 2034 },
+      { name: "Tafinlar+Mekinist", indication: "メラノーマ・NSCLC", rev: 2.2, patent: 2030 },
+      { name: "Scemblix（アシミニブ）", indication: "CML / STAMP阻害", rev: 1.3, patent: 2036 },
+    ],
+    pipeline: [
+      { name: "Remibrutinib（BTK阻害）", phase: "申請中", peak: "〜40億ドル", indication: "慢性蕁麻疹・CLL（pipeline-in-a-pill）" },
+      { name: "Leqvio（インクリシラン）", phase: "市販中", peak: "〜40億ドル", indication: "高コレステロール血症 siRNA" },
+      { name: "Ianalumab（抗BAFF-R）", phase: "Ph3", peak: "〜20億ドル", indication: "シェーグレン症候群・全身性ループス" },
+      { name: "Pluvicto 適応拡大（177Lu-PSMA）", phase: "申請中", peak: "〜30億ドル", indication: "ホルモン感受性前立腺がん" },
+    ]
+  }
+};
+
+const companyKeys = ["lilly","merck","pfizer","az","novartis"];
+
+function patentBadge(year) {
+  const yrs = year - 2025;
+  if (yrs <= 2) return `<span class="patent-badge badge-red">${year}年失効</span>`;
+  if (yrs <= 4) return `<span class="patent-badge badge-amber">${year}年失効</span>`;
+  if (yrs <= 7) return `<span class="patent-badge badge-teal">${year}年以降</span>`;
+  return `<span class="patent-badge badge-green">${year}年以降</span>`;
+}
+
+function buildOverview() {
+  const grid = document.getElementById("ovGrid");
+  companyKeys.forEach(k => {
+    const c = companies[k];
+    const gr = c.growth >= 0
+      ? `<span class="company-growth growth-pos">+${c.growth}%</span>`
+      : `<span class="company-growth growth-neg">${c.growth}%</span>`;
+    const risk = c.riskScore;
+    const rColor = risk > 60 ? "#E24B4A" : risk > 35 ? "#EF9F27" : "#639922";
+    grid.innerHTML += `<div class="overview-card" onclick="switchToCompany('${k}')">
+      <div class="company-name">${c.name} <span style="font-size:12px;color:#888;">${c.short}</span></div>
+      <div><span class="company-rev" style="color:${c.color}">$${c.rev2025}B</span>${gr}</div>
+      <div style="margin-top:10px;">
+        <div style="font-size:11px;color:#666;margin-bottom:3px;">特許リスクスコア (0=低, 100=高)</div>
+        <div class="risk-gauge"><div class="risk-fill" style="width:${risk}%;background:${rColor};"></div></div>
+        <div style="font-size:11px;color:${rColor};margin-top:2px;font-weight:500;">${risk}/100</div>
+      </div>
+      <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-size:11px;color:#666;">自己資本比率</div>
+          <div style="font-size:16px;font-weight:500;color:${c.equityRatio>=40?'#3B6D11':c.equityRatio>=30?'#854F0B':'#A32D2D'};">${c.equityRatio.toFixed(1)}%</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:11px;color:#666;">総資産</div>
+          <div style="font-size:13px;font-weight:500;color:#444;">$${c.totalAssets}B</div>
+        </div>
+      </div>
+      <div style="margin-top:8px;font-size:11px;color:#999;">クリックで詳細 →</div>
+    </div>`;
+  });
+}
+
+function switchToCompany(key) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('products').classList.add('active');
+  document.querySelector('[data-tab="products"]').classList.add('active');
+  buildProductTabs();
+  switchProdTab(key);
+}
+
+function buildProductTabs() {
+  const el = document.getElementById("prodTabs");
+  if (el.innerHTML) return;
+  companyKeys.forEach((k, i) => {
+    const c = companies[k];
+    el.innerHTML += `<button class="ctab${i===0?' active':''}" data-prod="${k}" onclick="switchProdTab('${k}')">${c.name}</button>`;
+  });
+  buildProdContent("lilly");
+}
+
+function switchProdTab(key) {
+  document.querySelectorAll('#prodTabs .ctab').forEach(t => {
+    t.classList.toggle('active', t.dataset.prod === key);
+  });
+  buildProdContent(key);
+}
+
+function buildProdContent(key) {
+  const c = companies[key];
+  const maxRev = Math.max(...c.products.map(p => p.rev));
+  let html = `<div class="metric-grid">
+    <div class="metric"><div class="metric-label">2025年総売上高</div><div class="metric-value" style="color:${c.color}">$${c.rev2025}B</div></div>
+    <div class="metric"><div class="metric-label">成長率 (YoY)</div><div class="metric-value" style="color:${c.growth>=0?'#3B6D11':'#A32D2D'}">${c.growth>=0?'+':''}${c.growth}%</div></div>
+    <div class="metric"><div class="metric-label">自己資本比率</div><div class="metric-value" style="color:${c.equityRatio>=40?'#3B6D11':c.equityRatio>=30?'#854F0B':'#A32D2D'}">${c.equityRatio.toFixed(1)}%</div></div>
+    <div class="metric"><div class="metric-label">パテントリスク</div><div class="metric-value" style="color:${c.riskScore>60?'#A32D2D':c.riskScore>35?'#854F0B':'#3B6D11'}">${c.riskScore}/100</div></div>
+  </div>
+  <table class="product-table">
+    <thead><tr>
+      <th>製品名</th><th>適応症</th><th style="text-align:right">2025年売上</th><th style="min-width:130px">売上比率</th><th>パテント期限</th>
+    </tr></thead><tbody>`;
+  c.products.forEach(p => {
+    const pct = Math.round(p.rev / maxRev * 100);
+    html += `<tr>
+      <td style="font-weight:500">${p.name}</td>
+      <td style="color:#666;font-size:12px;">${p.indication}</td>
+      <td style="text-align:right;font-weight:500;color:${c.color};">$${p.rev.toFixed(1)}B</td>
+      <td><div class="bar-wrap"><div class="bar-fill" style="width:${pct}%;background:${c.color};"></div></div></td>
+      <td>${patentBadge(p.patent)}</td>
+    </tr>`;
+  });
+  html += `</tbody></table>`;
+  document.getElementById("prodContent").innerHTML = html;
+}
+
+let patentChartObj = null;
+function buildPatentChart() {
+  if (patentChartObj) return;
+  const items = [
+    { label: "Eliquis (PFE)", start: 2020, end: 2026, color: "#E24B4A" },
+    { label: "Lynparza (MRK/AZ)", start: 2015, end: 2027, color: "#E24B4A" },
+    { label: "Ibrance (PFE)", start: 2015, end: 2027, color: "#E24B4A" },
+    { label: "Farxiga (AZN)", start: 2014, end: 2026, color: "#E24B4A" },
+    { label: "Entresto (NVS)", start: 2015, end: 2025, color: "#E24B4A" },
+    { label: "Keytruda (MRK)", start: 2014, end: 2028, color: "#EF9F27" },
+    { label: "Verzenio (LLY)", start: 2017, end: 2028, color: "#EF9F27" },
+    { label: "Jardiance (LLY)", start: 2014, end: 2028, color: "#EF9F27" },
+    { label: "Cosentyx (NVS)", start: 2015, end: 2029, color: "#EF9F27" },
+    { label: "Prevnar (PFE)", start: 2010, end: 2029, color: "#EF9F27" },
+    { label: "Tagrisso (AZN)", start: 2015, end: 2030, color: "#639922" },
+    { label: "Mounjaro/Zepbound (LLY)", start: 2021, end: 2036, color: "#639922" },
+    { label: "Kisqali (NVS)", start: 2017, end: 2033, color: "#639922" },
+    { label: "Kesimpta (NVS)", start: 2019, end: 2034, color: "#639922" },
+    { label: "Ultomiris (AZN)", start: 2019, end: 2034, color: "#639922" },
+    { label: "Enhertu (AZN)", start: 2020, end: 2032, color: "#639922" },
+  ];
+  const ctx = document.getElementById("patentChart");
+  if (!ctx) return;
+  patentChartObj = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: items.map(d => d.label),
+      datasets: [
+        { data: items.map(d => d.start - 2010), backgroundColor: "transparent", borderColor: "transparent" },
+        { data: items.map(d => d.end - d.start), backgroundColor: items.map(d => d.color + "CC"), borderColor: items.map(d => d.color), borderWidth: 1, borderRadius: 4 }
+      ]
+    },
+    options: {
+      indexAxis: "y", responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: (ctx) => ctx.datasetIndex === 0 ? null : `特許期限: ${items[ctx.dataIndex].end}年` } }
+      },
+      scales: {
+        x: { stacked: true, min: 0, max: 27, ticks: { callback: v => v + 2010, color: "#888", font: { size: 11 } }, grid: { color: "rgba(0,0,0,0.06)" } },
+        y: { stacked: true, ticks: { color: "#888", font: { size: 11 } }, grid: { display: false } }
+      }
+    }
+  });
+}
+
+function buildPipeTabs() {
+  const el = document.getElementById("pipeTabs");
+  if (el.innerHTML) return;
+  companyKeys.forEach((k, i) => {
+    const c = companies[k];
+    el.innerHTML += `<button class="ctab${i===0?' active':''}" data-pipe="${k}" onclick="switchPipeTab('${k}')">${c.name}</button>`;
+  });
+  buildPipeContent("lilly");
+}
+
+function switchPipeTab(key) {
+  document.querySelectorAll('#pipeTabs .ctab').forEach(t => {
+    t.classList.toggle('active', t.dataset.pipe === key);
+  });
+  buildPipeContent(key);
+}
+
+function buildPipeContent(key) {
+  const c = companies[key];
+  let html = `<div style="margin-bottom:14px;font-size:13px;color:#666;">${c.name}の主要開発パイプライン（後期段階）</div>`;
+  c.pipeline.forEach(p => {
+    const phaseColor = p.phase.includes("承認") || p.phase.includes("市販") ? "#3B6D11" : p.phase.includes("申請") ? "#185FA5" : p.phase.includes("Ph3") ? "#854F0B" : "#5F5E5A";
+    const phaseBg = p.phase.includes("承認") || p.phase.includes("市販") ? "#EAF3DE" : p.phase.includes("申請") ? "#E6F1FB" : p.phase.includes("Ph3") ? "#FAEEDA" : "#F1EFE8";
+    html += `<div class="pipeline-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+        <div class="pipeline-name">${p.name}</div>
+        <span style="font-size:11px;font-weight:500;padding:2px 10px;border-radius:999px;background:${phaseBg};color:${phaseColor};">${p.phase}</span>
+      </div>
+      <div class="pipeline-detail">${p.indication}</div>
+      <div style="margin-top:8px;font-size:12px;color:#666;">ピーク時売上見込み: <strong style="color:#1a1a1a;font-weight:500;">${p.peak}</strong></div>
+    </div>`;
+  });
+  document.getElementById("pipeContent").innerHTML = html;
+}
+
+function buildAnalysis() {
+  const analyses = [
+    { key: "lilly", score: 95, verdict: "最強", color: "#3B6D11", bg: "#EAF3DE",
+      text: "GLP-1/GIPフランチャイズ（Mounjaro・Zepbound）が超高成長を牽引。2025年売上は前年比+45%の65.2Bドル。パテントリスクは業界最低水準（2036年以降）。経口GLP-1（Orforglipron）・Retatrutideという次世代パイプラインで2030年代の成長も確保。Verzenioの2028年特許失効はリスクだが全体への影響は限定的。業界最高評価。" },
+    { key: "az", score: 82, verdict: "強", color: "#185FA5", bg: "#E6F1FB",
+      text: "16のブロックバスターを持ち、腫瘍領域（Tagrisso・Imfinzi・Enhertu）が+14%成長。2030年に80億ドル達成目標は堅実。近期リスクはFarxigaの米国特許失効（2026年4月）だが米国売上は全体の21%に過ぎない。ADC（Datroway）・camizestrantなどパイプラインも充実。" },
+    { key: "novartis", score: 68, verdict: "中", color: "#854F0B", bg: "#FAEEDA",
+      text: "Kisqali(+57%)・Kesimpta(+36%)・Pluvictoの高成長が魅力。しかし2026年はNovartis史上最大の特許失効年（Entresto米国失効）を迎えており、2026年売上はlow single-digit成長にとどまる見通し。Remibrutinibなど新薬でカバー可能か注目。" },
+    { key: "merck", score: 40, verdict: "要注意", color: "#A32D2D", bg: "#FCEBEB",
+      text: "Keytruda（31.7Bドル）が売上の約48%を占める危険な集中度。2028年の特許失効後に最大年間15Bドルの売上消失リスク。Keytruda Qlex（皮下注射製剤）による移行戦略と、Winrevair等の新薬でカバーを試みるが、Gardasil(-39%)の落ち込みも重なりポートフォリオの脆弱性が高い。" },
+    { key: "pfizer", score: 35, verdict: "要注意", color: "#A32D2D", bg: "#FCEBEB",
+      text: "COVID後遺症からの回復過程にあり、2025年売上は-2%。Eliquis（最大製品・6.5Bドル）の2026年特許失効が迫るうえ、Ibrance(2027年)も控えている。GLP-1競合参入（Danuglipron）は期待されるが2028年以前の承認は不透明。Vyndaqelとオンコロジー（Padcev・Lorbrena）は明るい材料。" },
+  ];
+  let html = `<div style="margin-bottom:16px;font-size:13px;color:#666;">各社のポートフォリオ総合評価（2025年実績・パテントリスク・パイプライン強度を総合）</div>
+  <div style="background:#fff;border-radius:10px;padding:16px;margin-bottom:24px;">
+    <div style="position:relative;height:260px;">
+      <canvas id="scoreChart" role="img" aria-label="5社のポートフォリオスコア比較">スコア: LLY 95, AZN 82, NVS 68, MRK 40, PFE 35</canvas>
+    </div>
+  </div>`;
+  analyses.forEach(a => {
+    const c = companies[a.key];
+    html += `<div class="analysis-block" style="border-left-color:${a.color};background:${a.bg};">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap;">
+        <span style="font-size:15px;font-weight:500;">${c.name}</span>
+        <span style="font-size:12px;font-weight:500;padding:2px 10px;border-radius:999px;background:${a.color};color:#fff;">${a.verdict}</span>
+        <span style="font-size:13px;font-weight:500;color:${a.color};">スコア ${a.score}/100</span>
+      </div>
+      <div style="font-size:13px;line-height:1.7;">${a.text}</div>
+    </div>`;
+  });
+  document.getElementById("analysisContent").innerHTML = html;
+  setTimeout(() => {
+    const ctx = document.getElementById("scoreChart");
+    if (!ctx) return;
+    new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: ["Eli Lilly","AstraZeneca","Novartis","Merck","Pfizer"],
+        datasets: [{
+          label: "ポートフォリオスコア",
+          data: [95, 82, 68, 40, 35],
+          backgroundColor: ["#378ADDcc","#D85A30cc","#BA7517cc","#1D9E75cc","#533AB7cc"],
+          borderColor: ["#378ADD","#D85A30","#BA7517","#1D9E75","#533AB7"],
+          borderWidth: 1, borderRadius: 6
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `スコア: ${ctx.raw}/100` } } },
+        scales: {
+          y: { min: 0, max: 100, ticks: { color: "#888", font: { size: 11 } }, grid: { color: "rgba(0,0,0,0.06)" } },
+          x: { ticks: { color: "#888", font: { size: 11 } }, grid: { display: false } }
+        }
+      }
+    });
+  }, 100);
+}
+
+let equityChartObj = null;
+let equityRadarObj = null;
+function buildEquity() {
+  const eqData = [
+    { key:"lilly",   name:"Eli Lilly",    assets:112.5, equity:26.5,  ratio:23.6, debt:85.9  },
+    { key:"merck",   name:"Merck",        assets:129.5, equity:49.1,  ratio:37.9, debt:80.4  },
+    { key:"pfizer",  name:"Pfizer",       assets:208.2, equity:93.1,  ratio:44.7, debt:115.1 },
+    { key:"az",      name:"AstraZeneca",  assets:114.1, equity:48.7,  ratio:42.7, debt:65.4  },
+    { key:"novartis",name:"Novartis",     assets:110.9, equity:46.5,  ratio:42.0, debt:64.4  },
+  ];
+  const colors = { lilly:"#378ADD", merck:"#1D9E75", pfizer:"#533AB7", az:"#D85A30", novartis:"#BA7517" };
+
+  let html = `<div style="margin-bottom:16px;font-size:13px;color:#666;">2025年12月末時点の貸借対照表データ（有価証券報告書・年次報告書ベース）</div>`;
+
+  html += `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:24px;">`;
+  eqData.forEach(d => {
+    const rColor = d.ratio >= 40 ? "#3B6D11" : d.ratio >= 30 ? "#854F0B" : "#A32D2D";
+    const rBg    = d.ratio >= 40 ? "#eaf3de" : d.ratio >= 30 ? "#faeeda" : "#fce8e8";
+    html += `<div style="background:#fff;border:1px solid #e0ded8;border-radius:10px;padding:14px;">
+      <div style="font-size:13px;font-weight:500;color:${colors[d.key]};margin-bottom:8px;">${d.name}</div>
+      <div style="font-size:11px;color:#666;margin-bottom:2px;">自己資本比率</div>
+      <div style="font-size:26px;font-weight:500;color:${rColor};">${d.ratio.toFixed(1)}<span style="font-size:14px;">%</span></div>
+      <div style="margin-top:8px;">
+        <div style="display:flex;gap:2px;height:8px;border-radius:4px;overflow:hidden;background:#f0efe8;">
+          <div style="width:${d.ratio.toFixed(1)}%;background:${colors[d.key]};border-radius:4px 0 0 4px;"></div>
+        </div>
+      </div>
+      <div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:11px;">
+        <div style="color:#666;">総資産</div><div style="text-align:right;font-weight:500;">$${d.assets}B</div>
+        <div style="color:#666;">自己資本</div><div style="text-align:right;font-weight:500;color:${rColor};">$${d.equity}B</div>
+        <div style="color:#666;">負債合計</div><div style="text-align:right;font-weight:500;">$${d.debt}B</div>
+      </div>
+      <div style="margin-top:8px;display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:500;background:${rBg};color:${rColor};">
+        ${d.ratio >= 40 ? "健全" : d.ratio >= 30 ? "普通" : "低水準"}
+      </div>
+    </div>`;
+  });
+  html += `</div>`;
+
+  html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
+    <div style="background:#fff;border-radius:10px;padding:16px;">
+      <div style="font-size:12px;color:#666;font-weight:500;margin-bottom:10px;">自己資本比率の比較（%）</div>
+      <div style="position:relative;height:220px;"><canvas id="eqBarChart" role="img" aria-label="自己資本比率棒グラフ"></canvas></div>
+    </div>
+    <div style="background:#fff;border-radius:10px;padding:16px;">
+      <div style="font-size:12px;color:#666;font-weight:500;margin-bottom:10px;">総資産の構成（自己資本 vs 負債）</div>
+      <div style="position:relative;height:220px;"><canvas id="eqStackChart" role="img" aria-label="資産構成積み上げ棒グラフ"></canvas></div>
+    </div>
+  </div>`;
+
+  html += `<div style="background:#fff;border-radius:10px;padding:16px;margin-bottom:16px;">
+    <div style="font-size:12px;color:#666;font-weight:500;margin-bottom:12px;">財務健全性の解説</div>
+    <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+      <thead><tr style="border-bottom:1px solid #e8e6e0;background:#fafaf8;">
+        <th style="padding:8px 12px;font-size:11px;font-weight:500;color:#666;text-align:left;">企業</th>
+        <th style="padding:8px 12px;font-size:11px;font-weight:500;color:#666;text-align:right;">自己資本比率</th>
+        <th style="padding:8px 12px;font-size:11px;font-weight:500;color:#666;text-align:right;">自己資本($B)</th>
+        <th style="padding:8px 12px;font-size:11px;font-weight:500;color:#666;text-align:right;">総資産($B)</th>
+        <th style="padding:8px 12px;font-size:11px;font-weight:500;color:#666;text-align:left;">主な特徴・背景</th>
+      </tr></thead>
+      <tbody>
+        <tr style="border-bottom:1px solid #f0efe8;">
+          <td style="padding:10px 12px;font-weight:500;color:#378ADD;">Eli Lilly</td>
+          <td style="padding:10px 12px;text-align:right;color:#A32D2D;font-weight:500;">23.6%</td>
+          <td style="padding:10px 12px;text-align:right;">$26.5B</td>
+          <td style="padding:10px 12px;text-align:right;">$112.5B</td>
+          <td style="padding:10px 12px;font-size:12px;color:#555;">5社中最低。総資産は前年比+43%（$78.7B→$112.5B）と急拡大。製造能力増強・M&Aへの積極投資が背景。GLP-1フランチャイズの急成長に伴う売上債権・売上リベート引当金の増大も影響。</td>
+        </tr>
+        <tr style="border-bottom:1px solid #f0efe8;">
+          <td style="padding:10px 12px;font-weight:500;color:#1D9E75;">Merck</td>
+          <td style="padding:10px 12px;text-align:right;color:#854F0B;font-weight:500;">37.9%</td>
+          <td style="padding:10px 12px;text-align:right;">$49.1B</td>
+          <td style="padding:10px 12px;text-align:right;">$129.5B</td>
+          <td style="padding:10px 12px;font-size:12px;color:#555;">Verona Pharma買収（$100億）などの大型M&Aで総資産が増大。自己資本自体は増加傾向だが負債も拡大。Keytruda依存のリスクと合わせて財務的な余力に注目が必要。</td>
+        </tr>
+        <tr style="border-bottom:1px solid #f0efe8;">
+          <td style="padding:10px 12px;font-weight:500;color:#533AB7;">Pfizer</td>
+          <td style="padding:10px 12px;text-align:right;color:#3B6D11;font-weight:500;">44.7%</td>
+          <td style="padding:10px 12px;text-align:right;">$93.1B</td>
+          <td style="padding:10px 12px;text-align:right;">$208.2B</td>
+          <td style="padding:10px 12px;font-size:12px;color:#555;">5社中最大の総資産・自己資本。Seagen買収（$430億）による無形資産・のれんが総資産の60%超を占める。自己資本比率は健全だが、M&A後の資産評価リスクが潜在的懸念。</td>
+        </tr>
+        <tr style="border-bottom:1px solid #f0efe8;">
+          <td style="padding:10px 12px;font-weight:500;color:#D85A30;">AstraZeneca</td>
+          <td style="padding:10px 12px;text-align:right;color:#3B6D11;font-weight:500;">42.7%</td>
+          <td style="padding:10px 12px;text-align:right;">$48.7B</td>
+          <td style="padding:10px 12px;text-align:right;">$114.1B</td>
+          <td style="padding:10px 12px;font-size:12px;color:#555;">収益成長とともに自己資本が拡大（前年$40.9B→$48.7B）。バランスの取れた財務構造。2030年$80B売上目標に向けたR&D投資を維持しながら健全水準を維持。</td>
+        </tr>
+        <tr>
+          <td style="padding:10px 12px;font-weight:500;color:#BA7517;">Novartis</td>
+          <td style="padding:10px 12px;text-align:right;color:#3B6D11;font-weight:500;">42.0%</td>
+          <td style="padding:10px 12px;text-align:right;">$46.5B</td>
+          <td style="padding:10px 12px;text-align:right;">$110.9B</td>
+          <td style="padding:10px 12px;font-size:12px;color:#555;">積極的な自社株買い（2025年$91億）・配当支払い（$78億）にも関わらず健全水準を維持。純医薬品専業会社として純化後の安定した財務基盤を示す。負債/自己資本比率は0.72：1。</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+  </div>`;
+
+  document.getElementById("equityContent").innerHTML = html;
+
+  setTimeout(() => {
+    const ctx1 = document.getElementById("eqBarChart");
+    if (ctx1 && !equityChartObj) {
+      equityChartObj = new Chart(ctx1, {
+        type: "bar",
+        data: {
+          labels: ["Eli Lilly","Merck","Pfizer","AstraZeneca","Novartis"],
+          datasets: [{
+            label: "自己資本比率(%)",
+            data: [23.6, 37.9, 44.7, 42.7, 42.0],
+            backgroundColor: ["#378ADDcc","#1D9E75cc","#533AB7cc","#D85A30cc","#BA7517cc"],
+            borderColor:      ["#378ADD","#1D9E75","#533AB7","#D85A30","#BA7517"],
+            borderWidth: 1, borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: ctx => `${ctx.raw}%` } },
+            annotation: {}
+          },
+          scales: {
+            y: { min: 0, max: 55, ticks: { callback: v => v + "%", color: "#888", font: { size: 11 } }, grid: { color: "rgba(0,0,0,0.06)" } },
+            x: { ticks: { color: "#888", font: { size: 10 } }, grid: { display: false } }
+          }
+        }
+      });
+    }
+    const ctx2 = document.getElementById("eqStackChart");
+    if (ctx2 && !equityRadarObj) {
+      equityRadarObj = new Chart(ctx2, {
+        type: "bar",
+        data: {
+          labels: ["Eli Lilly","Merck","Pfizer","AstraZeneca","Novartis"],
+          datasets: [
+            {
+              label: "自己資本",
+              data: [26.5, 49.1, 93.1, 48.7, 46.5],
+              backgroundColor: ["#378ADDcc","#1D9E75cc","#533AB7cc","#D85A30cc","#BA7517cc"],
+              borderWidth: 0, borderRadius: { topLeft:0, topRight:0, bottomLeft:4, bottomRight:4 }
+            },
+            {
+              label: "負債合計",
+              data: [85.9, 80.4, 115.1, 65.4, 64.4],
+              backgroundColor: ["#378ADD33","#1D9E7533","#533AB733","#D85A3033","#BA751733"],
+              borderColor:     ["#378ADD88","#1D9E7588","#533AB788","#D85A3088","#BA751788"],
+              borderWidth: 1, borderRadius: { topLeft:4, topRight:4, bottomLeft:0, bottomRight:0 }
+            }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: true,
+              labels: { font: { size: 11 }, color: "#666", boxWidth: 10, padding: 12 }
+            },
+            tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: $${ctx.raw}B` } }
+          },
+          scales: {
+            x: { stacked: true, ticks: { color: "#888", font: { size: 10 } }, grid: { display: false } },
+            y: { stacked: true, ticks: { callback: v => `$${v}B`, color: "#888", font: { size: 11 } }, grid: { color: "rgba(0,0,0,0.06)" } }
+          }
+        }
+      });
+    }
+  }, 100);
+}
+
+
+function buildOvChart() {
+  const ctx = document.getElementById("ovChart");
+  if (!ctx || ctx._chartjs_rendered) return;
+  ctx._chartjs_rendered = true;
+  new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: ["Eli Lilly","Merck","Pfizer","AstraZeneca","Novartis"],
+      datasets: [{
+        label: "2025年売上高（十億ドル）",
+        data: [65.2, 65.0, 62.6, 58.7, 55.3],
+        backgroundColor: ["#378ADDcc","#1D9E75cc","#533AB7cc","#D85A30cc","#BA7517cc"],
+        borderColor: ["#378ADD","#1D9E75","#533AB7","#D85A30","#BA7517"],
+        borderWidth: 1, borderRadius: 6
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => `$${c.raw}B` } } },
+      scales: {
+        y: { min: 0, ticks: { callback: v => `$${v}B`, color: "#888", font: { size: 11 } }, grid: { color: "rgba(0,0,0,0.06)" } },
+        x: { ticks: { color: "#888", font: { size: 11 } }, grid: { display: false } }
+      }
+    }
+  });
+}
+
+document.querySelectorAll('[data-tab]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+    if (btn.dataset.tab === 'products') buildProductTabs();
+    if (btn.dataset.tab === 'patent') setTimeout(buildPatentChart, 50);
+    if (btn.dataset.tab === 'pipeline') buildPipeTabs();
+    if (btn.dataset.tab === 'equity') buildEquity();
+    if (btn.dataset.tab === 'analysis') buildAnalysis();
+  });
+});
+
+buildOverview();
+window.addEventListener('load', () => { setTimeout(buildOvChart, 200); });
+</script>
+</body>
+</html>
