@@ -165,7 +165,7 @@ header p{font-size:13px;color:var(--text-muted);margin-top:6px;}
       </div>
     </div>
     <div class="chart-card">
-      <h3>地域別売上高（2025年 $M）</h3>
+      <h3>地域別売上高（2025年 $M）<span style="font-weight:400;font-size:11px;color:var(--text-muted);margin-left:6px;">ホバーで成長率表示</span></h3>
       <div style="position:relative;height:280px;">
         <canvas id="regionChart" role="img" aria-label="地域別売上高グラフ"></canvas>
       </div>
@@ -554,25 +554,42 @@ function buildCharts(){
     }
   });
 
-  // Region bar
+  // Region bar — FY2025 official data (20-F / full-year results)
+  // Established RoW ($5,247M) split: Japan $3,768M + CA/AU/NZ $1,479M
+  const regionLabels = ["米国","欧州","新興国\n(中国除く)","中国","日本","その他\n(CA/AU/NZ)"];
+  const regionData   = [25503, 12739, 8248, 7250, 3768, 1479];
+  const regionColors = ["#1A5276","#117A65","#B7770D","#C0392B","#6C3483","#888"];
+  const regionGrowth = ["+10%","+5%","+22%","+4%","+6%","—"];
   new Chart(document.getElementById("regionChart"),{
     type:"bar",
     data:{
-      labels:["米国","欧州","中国","新興国\n（中国除く）","その他"],
+      labels: regionLabels,
       datasets:[{
         label:"2025年地域別売上（$M）",
-        data:[17900,11200,7600,7900,14139],
-        backgroundColor:["#1A5276cc","#117A65cc","#C0392Bcc","#B7770Dcc","#6C3483cc"],
-        borderColor:["#1A5276","#117A65","#C0392B","#B7770D","#6C3483"],
+        data: regionData,
+        backgroundColor: regionColors.map(c=>c+"cc"),
+        borderColor: regionColors,
         borderWidth:1, borderRadius:4
       }]
     },
     options:{
       responsive:true, maintainAspectRatio:false,
-      plugins:{legend:{display:false}, tooltip:{callbacks:{label:c=>`$${(c.raw/1000).toFixed(1)}B`}}},
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{
+          label: c => `$${(c.raw/1000).toFixed(1)}B`,
+          afterLabel: c => `前年比: ${regionGrowth[c.dataIndex]}`
+        }}
+      },
       scales:{
-        y:{ticks:{callback:v=>`$${v/1000}B`,color:"#888",font:{size:10}},grid:{color:"rgba(0,0,0,0.05)"}},
-        x:{ticks:{color:"#555",font:{size:10}},grid:{display:false}}
+        y:{
+          ticks:{callback:v=>`$${v/1000}B`,color:"#888",font:{size:10}},
+          grid:{color:"rgba(0,0,0,0.05)"}
+        },
+        x:{
+          ticks:{color:"#555",font:{size:10},maxRotation:0},
+          grid:{display:false}
+        }
       }
     }
   });
